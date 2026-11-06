@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./public/logo.png" width="112" alt="UE Vault Pro Logo" />
+<img src="./docs/logo.png" width="112" alt="UE Vault Pro Logo" />
 
 # ⚡ UE VAULT PRO (v1.1.0 Flagship)
 
