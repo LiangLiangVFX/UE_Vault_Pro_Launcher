@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UE Vault Pro · 虚幻引擎 5 次世代全能研发工作站</title>
+  <meta name="description" content="专为虚幻引擎 5 开发者打造的工程中枢、Fab 数字资产金库、BlueprintUE 节点工坊与研发知识库一站式客户端。" />
+  <link rel="icon" href="./logo.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background-color: #05070D;
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      overflow-x: hidden;
+    }
+    .cyber-grid-bg {
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.16), transparent 48%),
+        radial-gradient(circle at 85% 65%, rgba(245, 158, 11, 0.10), transparent 45%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+    }
+    /* 鼠标跟随聚光灯卡片交互 */
+    .spotlight-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease, box-shadow 0.28s ease;
+    }
+    .spotlight-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(520px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 229, 255, 0.13), transparent 40%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .spotlight-card:hover::before { opacity: 1; }
+    .spotlight-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0, 229, 255, 0.45);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 229, 255, 0.12);
+    }
+    /* 3D 视差软件截图展示舱 */
+    .showcase-3d-stage {
+      perspective: 1400px;
+    }
+    .showcase-3d-frame {
+      transform: rotateX(var(--rx, 2deg)) rotateY(var(--ry, 0deg));
+      transition: transform 0.18s ease-out, box-shadow 0.3s ease;
+      will-change: transform;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.75; transform: scale(1.06); }
+    }
+    .hero-glow { animation: pulseGlow 4s ease-in-out infinite; }
+  </style>
+</head>
+<body class="cyber-grid-bg min-h-screen selection:bg-cyan-400 selection:text-slate-950">
+
+  <!-- ==================== 顶部悬浮毛玻璃导航栏 ==================== -->
+  <header class="sticky top-0 z-50 backdrop-blur-2xl bg-[#05070D]/80 border-b border-white/[0.08]">
+    <div class="max-w-7xl mx-auto h-20 px-6 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3.5 group">
+        <!-- 图标防裂设计：优先加载 ./logo.png，若不存在自动切换内置全息 SVG 徽标 -->
+        <div class="relative w-11 h-11 rounded-2xl bg-[#0D1322] border border-cyan-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(0,229,255,0.25)] group-hover:scale-105 transition-transform overflow-hidden">
+          <img
+            src="./logo.png"
+            alt="UE Vault Pro"
+            class="w-8 h-8 object-contain"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          />
+          <div style="display:none;" class="w-full h-full items-center justify-center bg-gradient-to-br from-cyan-400/20 to-blue-600/20 text-cyan-300 font-black text-lg">
+            V
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-black text-lg tracking-wider text-white">UE VAULT PRO</span>
+            <span id="nav-ver-badge" class="px-2 py-0.5 rounded-md bg-cyan-400/15 border border-cyan-400/40 text-cyan-300 text-[11px] font-mono font-bold">
+              v1.1.0
+            </span>
+          </div>
+          <div class="text-[11px] font-mono text-slate-400 tracking-wide">UNREAL ENGINE 5 WORKSTATION HUB</div>
+        </div>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+        <a href="#showcase" class="hover:text-cyan-300 transition-colors" data-zh="软件界面预览" data-en="UI Showcase">软件界面预览</a>
+        <a href="#features" class="hover:text-cyan-300 transition-colors" data-zh="四大核心模块" data-en="Core Modules">四大核心模块</a>
+        <a href="#pro-tools" class="hover:text-amber-300 transition-colors" data-zh="PRO 独占工具" data-en="PRO Arsenal">PRO 独占工具</a>
+        <a href="#pricing" class="hover:text-cyan-300 transition-colors" data-zh="版本对比与订阅" data-en="Pricing">版本对比与订阅</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <button
+          id="lang-btn"
+          onclick="toggleLang()"
+          class="px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-xs font-mono font-bold text-slate-200 cursor-pointer transition-colors"
+        >
+          🌐 EN / 中文
+        </button>
+        <a
+          href="https://github.com/LiangLiangVFX/UE_Vault_Pro_Launcher"
+          target="_blank"
+          rel="noopener"
+          class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/15 border border-white/10 text-xs font-bold text-white transition-all"
+        >
+          <span>🐙 GitHub</span>
+        </a>
+        <a
+          id="top-download-btn"
+          href="https://github.com/LiangLiangVFX/UE_Vault_Pro_Launcher/releases/latest"
+          class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-[0_0_25px_rgba(0,229,255,0.35)] transition-all"
+          data-zh="⬇️ 立即下载"
+          data-en="⬇️ Download"
+        >
+          ⬇️ 立即下载
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== HERO 首屏主视觉区 ==================== -->
+  <section class="relative pt-16 pb-12 px-6 text-center max-w-6xl mx-auto">
+    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 text-xs font-mono font-bold mb-6">
+      <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+      <span data-zh="专为虚幻引擎 5.0 ~ 5.7 打造 · 原生桌面级研发工作站" data-en="BUILT FOR UNREAL ENGINE 5.0 ~ 5.7 · NATIVE DESKTOP WORKSTATION">
+        专为虚幻引擎 5.0 ~ 5.7 打造 · 原生桌面级研发工作站
+      </span>
+    </div>
+
+    <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-[1.15] text-white max-w-4xl mx-auto">
+      <span data-zh="彻底告别混乱的工程与资产" data-en="Master Your Unreal Engine">彻底告别混乱的工程与资产</span><br />
+      <span class="bg-gradient-to-r from-cyan-300 via-sky-400 to-amber-300 bg-clip-text text-transparent" data-zh="一站式接管你的 UE5 研发管线" data-en="Projects, Assets & Blueprints">
+        一站式接管你的 UE5 研发管线
+      </span>
+    </h1>
+
+    <p class="mt-5 text-slate-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed" data-zh="集成 UE 多版本工程秒级唤醒、DDC 缓存精准清理、Fab 商城 1920P 高清图集抓取、.uasset 依赖嗅探无损迁移、BlueprintUE 节点渲染与 Notion 研发知识库。" data-en="All-in-one Unreal Engine 5 hub featuring project launcher, DDC cache cleaner, Fab 1920P scraper, .uasset dependency migrator, T3D blueprint renderer, and Notion R&D knowledge base.">
+      集成 UE 多版本工程秒级唤醒、DDC 缓存精准清理、Fab 商城 1920P 高清图集抓取、.uasset 依赖嗅探无损迁移、BlueprintUE 节点渲染与 Notion 研发知识库。
+    </p>
+
+    <!-- 下载与订阅核心按钮组 -->
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+      <a
+        id="hero-download-btn"
+        href="https://github.com/LiangLiangVFX/UE_Vault_Pro_Launcher/releases/latest"
+        class="group relative overflow-hidden px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 font-black text-base shadow-[0_12px_40px_rgba(0,229,255,0.4)] hover:scale-[1.03] active:scale-95 transition-all flex items-center gap-2.5"
+      >
+        <span>🚀</span>
+        <span id="hero-download-text" data-zh="免费下载 Windows 桌面版 (v1.1.0)" data-en="Download for Windows x64 (v1.1.0)">
+          免费下载 Windows 桌面版 (v1.1.0)
+        </span>
+      </a>
+
+      <a
+        href="https://afdian.com/a/liangliangvfx"
+        target="_blank"
+        rel="noopener"
+        class="px-7 py-4 rounded-2xl bg-amber-400/15 hover:bg-amber-400 text-amber-300 hover:text-slate-950 border border-amber-400/45 font-black text-base transition-all flex items-center gap-2"
+      >
+        <span>👑</span>
+        <span data-zh="获取 PRO 专业版激活码 ↗" data-en="Get PRO License Key ↗">获取 PRO 专业版激活码 ↗</span>
+      </a>
+    </div>
+
+    <div class="mt-4 text-xs font-mono text-slate-500 flex items-center justify-center gap-4">
+      <span>Windows 10 / 11 (64-bit)</span>
+      <span>•</span>
+      <span id="release-date-text">Latest Release: v1.1.0</span>
+      <span>•</span>
+      <a href="https://github.com/LiangLiangVFX/UE_Vault_Pro_Launcher/releases" target="_blank" class="text-cyan-400 hover:underline">
+        查看历史版本与更新日志 ↗
+      </a>
+    </div>
+  </section>
+
+  <!-- ==================== 需求 7：软件实机界面高定展示站位区（带 4 模块切换与 3D 悬浮交互） ==================== -->
+  <section id="showcase" class="max-w-6xl mx-auto px-6 py-8">
+    <!-- 顶部 4 大界面视图切换按钮（点击可切换下方展示图，后期可替换为您的 4 张真实软件截图） -->
+    <div class="flex flex-wrap items-center justify-center gap-2.5 mb-6">
+      <button
+        onclick="switchShowcaseTab(0)"
+        id="tab-btn-0"
+        class="showcase-tab px-4 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(0,229,255,0.35)]"
+      >
+        <span>🚀 01. 工程管理中枢</span>
+      </button>
+      <button
+        onclick="switchShowcaseTab(1)"
+        id="tab-btn-1"
+        class="showcase-tab px-4 py-2.5 rounded-xl bg-[#0E1320] hover:bg-white/10 text-slate-300 border border-white/10 font-bold text-xs cursor-pointer transition-all flex items-center gap-2"
+      >
+        <span>📦 02. 数字资产金库</span>
+      </button>
+      <button
+        onclick="switchShowcaseTab(2)"
+        id="tab-btn-2"
+        class="showcase-tab px-4 py-2.5 rounded-xl bg-[#0E1320] hover:bg-white/10 text-slate-300 border border-white/10 font-bold text-xs cursor-pointer transition-all flex items-center gap-2"
+      >
+        <span>🕸️ 03. BlueprintUE 蓝图工坊</span>
+      </button>
+      <button
+        onclick="switchShowcaseTab(3)"
+        id="tab-btn-3"
+        class="showcase-tab px-4 py-2.5 rounded-xl bg-[#0E1320] hover:bg-white/10 text-slate-300 border border-white/10 font-bold text-xs cursor-pointer transition-all flex items-center gap-2"
+      >
+        <span>📘 04. 研发知识库</span>
+      </button>
+    </div>
+
+    <!-- 3D 视差高定软件截图占位画框 -->
+    <div class="showcase-3d-stage relative">
+      <div class="absolute -inset-2 rounded-[32px] bg-gradient-to-r from-cyan-500/25 via-blue-500/15 to-amber-500/25 blur-2xl hero-glow pointer-events-none"></div>
+
+      <div
+        id="showcase-frame"
+        onmousemove="handleShowcaseTilt(event)"
+        onmouseleave="resetShowcaseTilt()"
+        class="showcase-3d-frame relative rounded-[26px] bg-[#0B0F1A] border border-white/15 shadow-[0_35px_100px_rgba(0,0,0,0.95)] overflow-hidden"
+      >
+        <!-- 仿真软件顶部窗口栏 -->
+        <div class="h-11 px-5 bg-[#070A12] border-b border-white/[0.08] flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-400/80"></span>
+            <span class="w-3 h-3 rounded-full bg-emerald-400/80"></span>
+            <span id="showcase-window-title" class="ml-3 text-xs font-mono text-slate-400">
+              UE Vault Pro v1.1.0 — 工程中枢全库视图 (实机界面预览站位)
+            </span>
+          </div>
+          <span class="px-2.5 py-0.5 rounded bg-cyan-400/10 border border-cyan-400/30 text-[10px] font-mono text-cyan-300">
+            1630 × 1000 HD WORKSPACE
+          </span>
+        </div>
+
+        <!-- =========================================================================
+             👇【您的软件界面截图站位区】
+             后期您只需要把自己的软件截图命名为 preview-1.png ~ preview-4.png 放在 docs 文件夹下，
+             或者直接修改下方 <img id="showcase-img"> 的 src 地址即可直接替换！
+        ========================================================================== -->
+        <div class="relative aspect-[16/10] w-full bg-[#090C15] overflow-hidden flex items-center justify-center group">
+          <img
+            id="showcase-img"
+            src="./preview-1.png"
+            onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1600&q=85'"
+            alt="UE Vault Pro 软件界面预览站位"
+            class="w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.01]"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-[#070A12] via-transparent to-transparent opacity-80 pointer-events-none"></div>
+
+          <!-- 底部悬浮模块特性说明条 -->
+          <div class="absolute bottom-5 left-6 right-6 p-4 rounded-2xl bg-[#080B14]/90 backdrop-blur-xl border border-white/15 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div id="showcase-caption-title" class="text-sm font-black text-white">
+                🚀 工程管理中枢 · 自动识别多版本 UE 引擎与渲染管线参数
+              </div>
+              <div id="showcase-caption-desc" class="text-xs text-slate-400 mt-0.5">
+                支持悬停轮播实机图集、双击开启 60/40 黄金比例剧场巨幕、一键生成 VS (.sln) 解决方案与分项精准清理 DDC 缓存。
+              </div>
+            </div>
+            <span class="px-3 py-1.5 rounded-xl bg-cyan-400/15 border border-cyan-400/40 text-cyan-300 text-xs font-mono font-bold shrink-0">
+              UI PREVIEW SLOT
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 核心性能指标横幅 ==================== -->
+  <section class="max-w-6xl mx-auto px-6 py-10">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="spotlight-card p-6 rounded-3xl bg-[#0B0F1A]/90 border border-white/[0.08] text-center">
+        <div class="text-3xl font-black text-cyan-300 font-mono">UE 4.27 ~ 5.7</div>
+        <div class="text-xs text-slate-400 mt-1">全系引擎自动扫描与参数启动</div>
+      </div>
+      <div class="spotlight-card p-6 rounded-3xl bg-[#0B0F1A]/90 border border-white/[0.08] text-center">
+        <div class="text-3xl font-black text-amber-300 font-mono">60%+ GB</div>
+        <div class="text-xs text-slate-400 mt-1">DDC 与 Intermediate 冗余空间安全释放</div>
+      </div>
+      <div class="spotlight-card p-6 rounded-3xl bg-[#0B0F1A]/90 border border-white/[0.08] text-center">
+        <div class="text-3xl font-black text-emerald-400 font-mono">&lt; 80ms</div>
+        <div class="text-xs text-slate-400 mt-1">.uasset 二进制依赖关系树递归嗅探</div>
+      </div>
+      <div class="spotlight-card p-6 rounded-3xl bg-[#0B0F1A]/90 border border-white/[0.08] text-center">
+        <div class="text-3xl font-black text-purple-400 font-mono">1920P HD</div>
+        <div class="text-xs text-slate-400 mt-1">Fab 商城高清图集抓取与双语翻译归档</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 四大核心工作台模块深度解析 ==================== -->
+  <section id="features" class="max-w-6xl mx-auto px-6 py-14 space-y-8">
+    <div class="text-center max-w-2xl mx-auto">
+      <div class="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest mb-2">FOUR PILLARS OF WORKFLOW</div>
+      <h2 class="text-3xl font-black text-white">四大核心模块 · 构建闭环研发体验</h2>
+      <p class="text-xs text-slate-400 mt-2">从本地工程启动、商城资产归档、节点图复用到团队技术文档沉淀，全部浓缩于一个客户端。</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="spotlight-card p-7 rounded-3xl bg-[#0B0F1A]/90 border border-white/10 space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-cyan-400/15 border border-cyan-400/40 flex items-center justify-center text-2xl">🚀</div>
+        <h3 class="text-lg font-black text-white">01. UE 工程管理中枢 (Project Hub)</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          自动扫描本机安装的各版本 Unreal Engine，深度解析 `.uproject` 与 `DefaultEngine.ini`（自动识别 DX12、Lumen、VSM、HWRT 光追与 Git/P4V/SVN 状态）。支持卡片悬停静默轮播、剧场巨幕预览、右键直接生成 `.sln` 及创建桌面快捷方式。
+        </p>
+      </div>
+
+      <div class="spotlight-card p-7 rounded-3xl bg-[#0B0F1A]/90 border border-white/10 space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-2xl">📦</div>
+        <h3 class="text-lg font-black text-white">02. UE 数字资产金库 (Asset Vault)</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          告别网盘与下载目录里认不出内容的 `.zip / .7z / .rar` 压缩包。拖入资产即可自动写入仅 0.5KB 的 `_vault_meta.json` 极速元数据存档，管理 `_PreviewMedia` 本地预览图库，并支持一键移动归整至统一资产盘符。
+        </p>
+      </div>
+
+      <div class="spotlight-card p-7 rounded-3xl bg-[#0B0F1A]/90 border border-white/10 space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-400/15 border border-emerald-400/40 flex items-center justify-center text-2xl">🕸️</div>
+        <h3 class="text-lg font-black text-white">03. BlueprintUE 蓝图与材质工坊</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          在 UE5 编辑器中按 `Ctrl + C` 复制任意蓝图或材质节点，直接粘贴至客户端即可全息渲染出带真实引脚配色的可视化拓扑图。内置防堆叠自动排版引擎，点击「一键复制节点代码」即可随时贴回任意 UE5 工程。
+        </p>
+      </div>
+
+      <div class="spotlight-card p-7 rounded-3xl bg-[#0B0F1A]/90 border border-white/10 space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-purple-400/15 border border-purple-400/40 flex items-center justify-center text-2xl">📘</div>
+        <h3 class="text-lg font-black text-white">04. 研发知识库 (R&D Knowledge Center)</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          内置 10 套工业级虚幻研发 Markdown 规范模板（涵盖 Lumen 调优、GAS 架构、PCG 生态、MRQ 渲染等）。支持粘贴 Notion 公开链接递归抓取全文块树，或直接导入 Word (`.docx`) 自动抽离高清插图转换为标准技术笔记。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 7 大 PRO 专业版硬核生产力武器库 ==================== -->
+  <section id="pro-tools" class="max-w-6xl mx-auto px-6 py-14 space-y-8">
+    <div class="text-center max-w-2xl mx-auto">
+      <span class="px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold">
+        👑 PRO EXCLUSIVE ARSENAL
+      </span>
+      <h2 class="text-3xl font-black text-white mt-3">7 大 PRO 专业版独占生产力工具</h2>
+      <p class="text-xs text-slate-400 mt-2">专为独立开发者、技术美术 (TA) 与高频虚幻研发团队打造的自动化提效引擎。</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+      <div class="spotlight-card p-6 rounded-3xl bg-gradient-to-b from-amber-500/10 to-[#0B0F1A] border border-amber-400/30 space-y-2">
+        <div class="text-2xl">🧬</div>
+        <div class="text-sm font-black text-white">.uasset 依赖嗅探与无损迁移器</div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          无需苦等几分钟启动庞大的 UE5 编辑器！直接毫秒级解析 `.uasset / .umap` 二进制文件头中的 `/Game/...` 引用树，连带 `.uexp / .ubulk` 保持 `Content` 相对目录结构一键无损抽离至新工程。
+        </p>
+      </div>
+
+      <div class="spotlight-card p-6 rounded-3xl bg-gradient-to-b from-amber-500/10 to-[#0B0F1A] border border-amber-400/30 space-y-2">
+        <div class="text-2xl">🩺</div>
+        <div class="text-sm font-black text-white">CrashContext 崩溃日志中文诊断卡</div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          工程闪退一头雾水？一键扫描 `Saved/Crashes` 与最新 `.log` 尾部堆栈，秒级识别 D3D12 显卡驱动超时 (GPU Hang)、C++ 空指针越界、蓝图无限死循环与着色器 DDC 损坏，并给出中文修复方案。
+        </p>
+      </div>
+
+      <div class="spotlight-card p-6 rounded-3xl bg-gradient-to-b from-amber-500/10 to-[#0B0F1A] border border-amber-400/30 space-y-2">
+        <div class="text-2xl">📦</div>
+        <div class="text-sm font-black text-white">极速纯净归档 (ZipProjectUp) 与克隆</div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          外发交付或备份工程时，自动剔除几十 GB 的 `DerivedDataCache / Intermediate / Saved / Binaries`，仅提取纯净核心资产高速打包为 `.zip`，或一键克隆并自动重命名 `.uproject`。
+        </p>
+      </div>
+
+      <div class="spotlight-card p-6 rounded-3xl bg-gradient-to-b from-amber-500/10 to-[#0B0F1A] border border-amber-400/30 space-y-2">
+        <div class="text-2xl">🚀</div>
+        <div class="text-sm font-black text-white">资产包自动剥壳解压投送工程</div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          自动调用本机 Bandizip / 7-Zip / WinRAR / 原生 tar 解压 `.zip / .7z / .rar` 资产包，智能剥离外层带版本号的套壳文件夹，精准对齐合并至目标 UE 工程的 `Content` 与 `Plugins` 目录。
+        </p>
+      </div>
+
+      <div class="spotlight-card p-6 rounded-3xl bg-gradient-to-b from-amber-500/10 to-[#0B0F1A] border border-amber-400/30 space-y-2">
+        <div class="text-2xl">🌐</div>
+        <div class="text-sm font-black text-white">Fab 商城自动搜链 + 1920P 抓图与翻译</div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          导入本地资产包时自动根据包名检索匹配 Fab 商城商品链接，一键提取 1920P 高清无水印原图集存入本地 `_PreviewMedia`，并将英文技术规格全文翻译为纯正虚幻中文术语。
+        </p>
+      </div>
+
+      <div class="spotlight-card p-6 rounded-3xl bg-gradient-to-b from-amber-500/10 to-[#0B0F1A] border border-amber-400/30 space-y-2">
+        <div class="text-2xl">🔌</div>
+        <div class="text-sm font-black text-white">RunUAT 插件编译 + 全库 DDC 批量清理</div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          可视化选择 `.uplugin` 与目标引擎版本一键拉起 `RunUAT.bat BuildPlugin` 跨版本编译插件；同时支持多工程一键批量清理 DDC 与跨电脑同步蓝图/知识库数据包。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 版本对比与订阅价格区 ==================== -->
+  <section id="pricing" class="max-w-6xl mx-auto px-6 py-14 space-y-8">
+    <div class="text-center max-w-2xl mx-auto">
+      <h2 class="text-3xl font-black text-white">清晰透明的版本方案</h2>
+      <p class="text-xs text-slate-400 mt-2">基础管理功能永久免费开放；随时升级 PRO 专业版解锁全部自动化生产力工具。</p>
+    </div>
+
+    <div class="grid md:grid-cols-4 gap-5">
+      <!-- 社区免费版 -->
+      <div class="spotlight-card p-6 rounded-3xl bg-[#0B0F1A] border border-white/10 flex flex-col justify-between space-y-6">
+        <div>
+          <span class="px-2.5 py-1 rounded-md bg-white/10 text-slate-300 text-[10px] font-bold">COMMUNITY FREE</span>
+          <h3 class="text-lg font-black text-white mt-3">社区基础版</h3>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span class="text-3xl font-black text-white">¥0</span>
+            <span class="text-xs text-slate-400">/ 永久免费</span>
+          </div>
+          <ul class="mt-5 space-y-2.5 text-xs text-slate-300">
+            <li>✓ 工程中枢全库管理与参数启动</li>
+            <li>✓ 单个工程 DDC 缓存分项清理</li>
+            <li>✓ 剧场巨幕预览与桌面快捷方式</li>
+            <li>✓ 数字资产金库基础入库与归档</li>
+            <li>✓ BlueprintUE 蓝图节点解析渲染</li>
+            <li>✓ 研发知识库 10 套标准模板</li>
+          </ul>
+        </div>
+        <a
+          href="https://github.com/LiangLiangVFX/UE_Vault_Pro_Launcher/releases/latest"
+          class="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs text-center transition-colors"
+        >
+          免费下载使用
+        </a>
+      </div>
+
+      <!-- PRO 月度订阅 -->
+      <div class="spotlight-card p-6 rounded-3xl bg-[#0B0F1A] border border-white/15 flex flex-col justify-between space-y-6">
+        <div>
+          <span class="px-2.5 py-1 rounded-md bg-cyan-400/15 text-cyan-300 text-[10px] font-bold">FLEXIBLE</span>
+          <h3 class="text-lg font-black text-white mt-3">⚡ PRO 月度订阅</h3>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span class="text-3xl font-black text-amber-300">¥18</span>
+            <span class="text-xs text-slate-400">/ 30 天</span>
+          </div>
+          <ul class="mt-5 space-y-2.5 text-xs text-slate-300">
+            <li>✓ 包含社区基础版全部功能</li>
+            <li>✓ 🧬 .uasset 依赖嗅探与无损迁移</li>
+            <li>✓ 🩺 Crash 崩溃日志秒级中文诊断</li>
+            <li>✓ 📦 工程极速纯净归档与无损克隆</li>
+            <li>✓ 🚀 资产包自动解压投送工程</li>
+            <li>✓ 🌐 Fab 1920P 抓图与双语翻译</li>
+          </ul>
+        </div>
+        <a
+          href="https://afdian.com/a/liangliangvfx"
+          target="_blank"
+          class="w-full py-3 rounded-xl bg-amber-400/15 hover:bg-amber-400 text-amber-300 hover:text-slate-950 border border-amber-400/40 font-black text-xs text-center transition-all"
+        >
+          前往爱发电订阅 ↗
+        </a>
+      </div>
+
+      <!-- PRO 年度会员 -->
+      <div class="spotlight-card p-6 rounded-3xl bg-gradient-to-b from-cyan-500/15 to-[#0B0F1A] border-2 border-cyan-400 shadow-[0_0_35px_rgba(0,229,255,0.2)] flex flex-col justify-between space-y-6">
+        <div>
+          <span class="px-2.5 py-1 rounded-md bg-cyan-400 text-slate-950 text-[10px] font-black">🔥 最受欢迎 · 立省 55%</span>
+          <h3 class="text-lg font-black text-white mt-3">🔥 PRO 年度会员</h3>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span class="text-3xl font-black text-cyan-300">¥98</span>
+            <span class="text-xs text-slate-400">/ 365 天</span>
+          </div>
+          <ul class="mt-5 space-y-2.5 text-xs text-slate-200">
+            <li>✓ 解锁全部 7 大 PRO 独占高级工具</li>
+            <li>✓ 🔌 RunUAT 插件跨版本编译助手</li>
+            <li>✓ 🧹 多工程 DDC 缓存一键批量清理</li>
+            <li>✓ 📂 批量扫描目录自动过滤入库</li>
+            <li>✓ 🔄 蓝图与知识库跨机同步中心</li>
+            <li>✓ 🚀 享全年新版本功能免费升级</li>
+          </ul>
+        </div>
+        <a
+          href="https://afdian.com/a/liangliangvfx"
+          target="_blank"
+          class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 hover:brightness-110 text-slate-950 font-black text-xs text-center shadow-lg transition-all"
+        >
+          立即获取年度激活码 ↗
+        </a>
+      </div>
+
+      <!-- PRO 永久买断 -->
+      <div class="spotlight-card p-6 rounded-3xl bg-gradient-to-b from-amber-500/15 to-[#0B0F1A] border-2 border-amber-400/80 shadow-[0_0_35px_rgba(245,158,11,0.18)] flex flex-col justify-between space-y-6">
+        <div>
+          <span class="px-2.5 py-1 rounded-md bg-amber-400 text-slate-950 text-[10px] font-black">👑 旗舰尊享 · 终身有效</span>
+          <h3 class="text-lg font-black text-white mt-3">👑 PRO 永久买断版</h3>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span class="text-3xl font-black text-amber-300">¥198</span>
+            <span class="text-xs text-slate-400">/ 终身买断</span>
+          </div>
+          <ul class="mt-5 space-y-2.5 text-xs text-slate-200">
+            <li>✓ 一次付费，本机终身永久有效</li>
+            <li>✓ 包含全部 7 大 PRO 生产力工具</li>
+            <li>✓ 永久享受后续所有大版本迭代</li>
+            <li>✓ 独立本地离线神经网络翻译加速</li>
+            <li>✓ 专属开发者优先问题响应支持</li>
+            <li>✓ 无任何后续订阅续费压力</li>
+          </ul>
+        </div>
+        <a
+          href="https://afdian.com/a/liangliangvfx"
+          target="_blank"
+          class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:brightness-110 text-slate-950 font-black text-xs text-center shadow-lg transition-all"
+        >
+          立即买断永久 PRO ↗
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 底部版权与社媒链接 ==================== -->
+  <footer class="border-t border-white/[0.08] bg-[#04060A] py-10 px-6 text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="font-black text-white">UE VAULT PRO</span>
+        <span>·</span>
+        <span>Created by LiangLiangArtist (liangliangvfx@gmail.com)</span>
+      </div>
+      <div class="flex items-center gap-5">
+        <a href="https://github.com/LiangLiangVFX/UE_Vault_Pro_Launcher" target="_blank" class="hover:text-cyan-300">🐙 GitHub</a>
+        <a href="https://space.bilibili.com/75504176" target="_blank" class="hover:text-cyan-300">📺 Bilibili</a>
+        <a href="https://www.youtube.com/@zhaol2259" target="_blank" class="hover:text-rose-400">▶️ YouTube</a>
+        <a href="https://afdian.com/a/liangliangvfx" target="_blank" class="hover:text-amber-300">⚡ 爱发电主页</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== 官网交互脚本（自动拉取 GitHub 最新 .exe 直链 + 模块截图切换 + 鼠标聚光灯） ==================== -->
+  <script>
+    // 1. 鼠标移动卡片聚光灯追踪
+    document.querySelectorAll('.spotlight-card').forEach((card) => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+      });
+    });
+
+    // 2. 软件界面展示舱 3D 视差倾斜交互
+    function handleShowcaseTilt(e) {
+      const el = document.getElementById('showcase-frame');
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      el.style.setProperty('--rx', `${(-y * 5).toFixed(2)}deg`);
+      el.style.setProperty('--ry', `${(x * 6).toFixed(2)}deg`);
+    }
+    function resetShowcaseTilt() {
+      const el = document.getElementById('showcase-frame');
+      if (!el) return;
+      el.style.setProperty('--rx', '2deg');
+      el.style.setProperty('--ry', '0deg');
+    }
+
+    // 3. 四大模块软件截图站位切换器（后期将您的截图命名为 preview-1.png ~ preview-4.png 放入 docs/ 目录即可）
+    const SHOWCASE_SLIDES = [
+      {
+        img: './preview-1.png',
+        fallback: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1600&q=85',
+        winTitle: 'UE Vault Pro v1.1.0 — 01. 工程管理中枢 (Project Hub)',
+        title: '🚀 工程管理中枢 · 自动识别多版本 UE 引擎与渲染管线参数',
+        desc: '支持悬停轮播实机图集、双击开启 60/40 黄金比例剧场巨幕、一键生成 VS (.sln) 解决方案与分项精准清理 DDC 缓存。'
+      },
+      {
+        img: './preview-2.png',
+        fallback: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=85',
+        winTitle: 'UE Vault Pro v1.1.0 — 02. 数字资产金库 (Asset Vault)',
+        title: '📦 数字资产金库 · Fab 商城 1920P 原图抓取与自动剥壳投送工程',
+        desc: '自动根据包名检索 Fab 商城链接并翻译中文描述，支持 Bandizip / 7-Zip 自动解压并对齐合并至目标工程 Content 目录。'
+      },
+      {
+        img: './preview-3.png',
+        fallback: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1600&q=85',
+        winTitle: 'UE Vault Pro v1.1.0 — 03. BlueprintUE 蓝图与材质工坊',
+        title: '🕸️ BlueprintUE 蓝图工坊 · 原生 T3D 剪贴板节点图全息渲染',
+        desc: '在 UE5 中复制节点即可直接粘贴生成可视化节点连线图，内置防堆叠自动排版与一键复制还原回 UE5 编辑器。'
+      },
+      {
+        img: './preview-4.png',
+        fallback: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=1600&q=85',
+        winTitle: 'UE Vault Pro v1.1.0 — 04. 研发知识库 (R&D Knowledge Center)',
+        title: '📘 研发知识库 · Notion 全文递归同步与 10 套工业级规范模板',
+        desc: '支持 Notion 在线链接一键同步、Word (.docx) 自动提取插图转 Markdown，以及跨电脑知识包轻量化同步。'
+      }
+    ];
+
+    function switchShowcaseTab(idx) {
+      const slide = SHOWCASE_SLIDES[idx] || SHOWCASE_SLIDES[0];
+      const imgEl = document.getElementById('showcase-img');
+      if (imgEl) {
+        imgEl.onerror = function () { this.src = slide.fallback; };
+        imgEl.src = slide.img;
+      }
+      document.getElementById('showcase-window-title').innerText = slide.winTitle;
+      document.getElementById('showcase-caption-title').innerText = slide.title;
+      document.getElementById('showcase-caption-desc').innerText = slide.desc;
+
+      document.querySelectorAll('.showcase-tab').forEach((btn, i) => {
+        if (i === idx) {
+          btn.className = 'showcase-tab px-4 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-xs cursor-pointer transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(0,229,255,0.35)]';
+        } else {
+          btn.className = 'showcase-tab px-4 py-2.5 rounded-xl bg-[#0E1320] hover:bg-white/10 text-slate-300 border border-white/10 font-bold text-xs cursor-pointer transition-all flex items-center gap-2';
+        }
+      });
+    }
+
+    // 4. 自动连接 UE_Vault_Pro_Launcher GitHub Releases API，获取最新 .exe 安装包直链
+    (async function bindLatestGithubReleaseInstaller() {
+      try {
+        const res = await fetch('https://api.github.com/repos/LiangLiangVFX/UE_Vault_Pro_Launcher/releases/latest');
+        if (!res.ok) return;
+        const data = await res.json();
+        const ver = data.tag_name || 'v1.1.0';
+        const exeAsset = (data.assets || []).find((a) => a.name && a.name.toLowerCase().endsWith('.exe'));
+        const targetDownloadUrl = exeAsset ? exeAsset.browser_download_url : (data.html_url || 'https://github.com/LiangLiangVFX/UE_Vault_Pro_Launcher/releases/latest');
+
+        document.getElementById('nav-ver-badge').innerText = ver;
+        document.getElementById('top-download-btn').href = targetDownloadUrl;
+        document.getElementById('hero-download-btn').href = targetDownloadUrl;
+        document.getElementById('hero-download-text').innerText = `免费下载 Windows 桌面版 (${ver})`;
+        if (data.published_at) {
+          document.getElementById('release-date-text').innerText = `Latest Release: ${ver} (${data.published_at.slice(0, 10)})`;
+        }
+      } catch (e) {}
+    })();
+
+    // 5. 中英双语切换
+    let isEn = false;
+    function toggleLang() {
+      isEn = !isEn;
+      document.querySelectorAll('[data-zh]').forEach((el) => {
+        el.innerText = isEn ? el.getAttribute('data-en') : el.getAttribute('data-zh');
+      });
+    }
+  </script>
+</body>
+</html>
